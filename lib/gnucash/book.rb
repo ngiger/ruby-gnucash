@@ -15,6 +15,9 @@ module Gnucash
     # @return [Array<Transaction>] Transactions in the book.
     attr_reader :transactions
 
+    # @return [Array<Schedxaction>] Scheduled Transactions in the book.
+    attr_reader :schedxactions
+
     # @return [Date] Date of the first transaction in the book.
     attr_reader :start_date
 
@@ -57,6 +60,7 @@ module Gnucash
       build_customers
       build_accounts
       build_transactions
+      build_schedxactions
       finalize
     end
 
@@ -101,6 +105,18 @@ module Gnucash
       @customers.find { |a| a.full_name == full_name }
     end
 
+
+    # Return a handle to the Schedxaction object that has the given fully-qualified
+    # name.
+    #
+    # @param full_name [String]
+    #   Fully-qualified Schedxaction name (ex: "Joe Doe").
+    #
+    # @return [Schedxaction, nil] Schedxaction object, or nil if not found.
+    def find_schedxaction_by_full_name(full_name)
+      @schedxactions.find { |a| a.full_name == full_name }
+    end
+
     # Attributes available for inspection
     #
     # @return [Array<Symbol>] Attributes used to build the inspection string
@@ -121,6 +137,12 @@ module Gnucash
     def build_customers
       @customers = @book_node.xpath('gnc:GncCustomer').map do |customer_node|
         Customer.new(self, customer_node)
+      end
+    end
+
+    def build_schedxactions
+      @schedxactions = @book_node.xpath('gnc:schedxaction').map do |schedxaction_node|
+        Schedxaction.new(self, schedxaction_node)
       end
     end
 
