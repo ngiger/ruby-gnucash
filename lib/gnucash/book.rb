@@ -21,18 +21,33 @@ module Gnucash
     # @return [Date] Date of the last transaction in the book.
     attr_reader :end_date
 
+    # @return [Date] Root node of the gnucash
+    attr_reader :book_node
+
+    # @return [XML] Nokogiri XML of the gnucash file
+    attr_reader :ng
+
+    # @return [String] Filename of the gnucash
+    attr_reader :fname
+
+    # @return [Boolean] Whether the gnucash file is compressed (gzipped)
+    attr_reader :compressed
+
     # Construct a Book object.
     #
     # Normally called internally by {Gnucash.open}.
     #
     # @param fname [String]
-    #   The file name of the GnuCash file to open. Only XML format (or gzipped
+    #   The file name of the GnuCash file to open. Only XML format (or compressed
     #   XML format) GnuCash data files are recognized.
     def initialize(fname)
+      @fname = fname
       begin
         @ng = Nokogiri.XML(Zlib::GzipReader.open(fname).read)
-      rescue Zlib::GzipFile::Error
+        @compressed = true
+     rescue Zlib::GzipFile::Error
         @ng = Nokogiri.XML(File.read(fname))
+        @compressed = false
       end
       book_nodes = @ng.xpath('/gnc-v2/gnc:book')
       if book_nodes.count != 1
@@ -43,6 +58,16 @@ module Gnucash
       build_accounts
       build_transactions
       finalize
+    end
+
+    def save_as(filename = @fname, compressed = @compressed)
+      if compressed
+        Zlib::GzipWriter.open(filename) do |gz|
+          gz.write @ng
+        end
+      else
+        File.write(filename, @ng)
+      end
     end
 
     # Return a handle to the Account object that has the given GUID.

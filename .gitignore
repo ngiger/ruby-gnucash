@@ -15,5 +15,7 @@ test/tmp
 test/version_tmp
 tmp
 test.rb
+test-gnucash.gz
+test-gnucash.xml
 spec/books/*.gnucash.*.*
 spec/books/*.LCK
